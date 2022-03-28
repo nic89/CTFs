@@ -1,4 +1,4 @@
-import binascii.unhexlify
+#import binascii.unhexlify
 
 def readFileBytes(path):
     try:
@@ -30,14 +30,14 @@ def createPolyglot(code):
     header = b'\x00' * (int.from_bytes(startJSComment, "big") - 2)
     code = b'\x2A\x2F\x3D' + code #end JS comment and add an '=' for assignment
     code = code + b'\x2F\x2A' #begin another JS comment after code
-    codeLength = len(code)
-    codeLengthToBytes = bytes([codeLength])
-    codeLengthToBytes = codeLengthToBytes if len(codeLengthToBytes) > 1 else b'\x00' + codeLengthToBytes
-    
-    jpgComment = b'\xFF\xFE' + codeLengthToBytes + code
+    codeLength = "%X" % len(code)
+    codeLength = codeLength if len(codeLength) % 2 == 0 else '0' + codeLength
+    codeLength = bytes.fromhex(codeLength)
+    jpgComment = b'\xFF\xFE' + codeLength + code
     endOfImage = b'\x2A\x2F\x2F\x2F\xFF\xD9'
 
     polyglot = magicBytes + startJSComment + header + jpgComment + endOfImage
+    return polyglot
 
 def injectCode(original, code):
     original = original[3:] #remove magic bytes
@@ -48,10 +48,9 @@ def injectCode(original, code):
     header = original[2:int.from_bytes(header_length, "big") - 2] #get original header
 
     headerPadding = int.from_bytes(startJSComment, "big") - int.from_bytes(header_length, "big")
-    newHeader = startJSComment + 
+    newHeader = startJSComment  
     if header_length > startJSComment:
         print("Try a smaller JPEG file")
         return False
     
-
 
