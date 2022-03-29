@@ -39,18 +39,18 @@ def createPolyglot(code):
     polyglot = magicBytes + startJSComment + header + jpgComment + endOfImage
     return polyglot
 
-def injectCode(original, code):
-    original = original[3:] #remove magic bytes
-
-    magicBytes = b'\xFF\xD8\xFF\xE0'
+def injectCode(original, payload):
+    payload = b'\x2A\x2F\x3D' + payload + b'\x2F\x2A' # */=PAYLOAD/*
+    magicBytes = original[:4]
     startJSComment = b'\x2F\x2A'
-    header_length = original[:2] #get length in hex
-    header = original[2:int.from_bytes(header_length, "big") - 2] #get original header
+    original = original[6:] # get rid of magic bytes and length tag
+    headerLength = original[:2] #get length in hex
+    headerLength = int.from_bytes(headerLength, "big") - 2 #hex to int and subtract the length of the length tag (2 bytes)
+    headerPaddingLength = int.from_bytes(startJSComment, "big") - headerLength - len(payload) #padding length is (2F2A) - (original header length) - (payload length)
 
-    headerPadding = int.from_bytes(startJSComment, "big") - int.from_bytes(header_length, "big")
-    newHeader = startJSComment  
-    if header_length > startJSComment:
-        print("Try a smaller JPEG file")
-        return False
+    headerPadding = b'\x00' * headerPaddingLength
+
+    newImage = magicBytes + startJSComment + original[:(headerLength)] + headerPadding + payload + original[(headerLength):]
+    return newImage
     
 
